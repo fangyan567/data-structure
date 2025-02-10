@@ -1,0 +1,105 @@
+#include <iostream>
+#include <vector>
+#include <stdexcept>
+
+class MinHeap {
+private:
+    std::vector<int> heap;
+
+    // 获取父节点索引
+    int parent(int i) {
+        return (i - 1) / 2;
+    }
+
+    // 获取左子节点索引
+    int leftChild(int i) {
+        return 2 * i + 1;
+    }
+
+    // 获取右子节点索引
+    int rightChild(int i) {
+        return 2 * i + 2;
+    }
+
+    // 上浮操作
+    void heapifyUp(int i) {
+        while (i > 0 && heap[parent(i)] > heap[i]) {
+            std::swap(heap[parent(i)], heap[i]);
+            i = parent(i);
+        }
+    }
+
+    // 下沉操作
+    void heapifyDown(int i) {
+        int minIndex = i;
+        int left = leftChild(i);
+        int right = rightChild(i);
+
+        if (left < heap.size() && heap[left] < heap[minIndex]) {
+            minIndex = left;
+        }
+
+        if (right < heap.size() && heap[right] < heap[minIndex]) {
+            minIndex = right;
+        }
+
+        if (i != minIndex) {
+            std::swap(heap[i], heap[minIndex]);
+            heapifyDown(minIndex);
+        }
+    }
+
+public:
+    // 插入元素
+    void insert(int value) {
+        heap.push_back(value);
+        heapifyUp(heap.size() - 1);
+    }
+
+    // 获取最小元素
+    int getMin() {
+        if (heap.empty()) {
+            throw std::out_of_range("Heap is empty");
+        }
+        return heap[0];
+    }
+
+    // 删除最小元素
+    void extractMin() {
+        if (heap.empty()) {
+            throw std::out_of_range("Heap is empty");
+        }
+        heap[0] = heap.back();
+        heap.pop_back();
+        heapifyDown(0);
+    }
+
+    // 打印堆
+    void print() {
+        for (int i : heap) {
+            std::cout << i << " ";
+        }
+        std::cout << std::endl;
+    }
+};
+
+int main() {
+    MinHeap minHeap;
+
+    minHeap.insert(10);
+    minHeap.insert(5);
+    minHeap.insert(15);
+    minHeap.insert(2);
+    minHeap.insert(20);
+
+    std::cout << "Min heap: ";
+    minHeap.print();
+
+    std::cout << "Min element: " << minHeap.getMin() << std::endl;
+
+    minHeap.extractMin();
+    std::cout << "Min heap after extractMin: ";
+    minHeap.print();
+
+    return 0;
+}
