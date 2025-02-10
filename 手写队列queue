@@ -1,0 +1,220 @@
+# 手写队列queue
+
+## 参考代码一：
+```cpp
+#include <iostream>
+
+using namespace std;
+
+const int MAX_SIZE = 100; // 队列的最大容量
+
+class Queue {
+private:
+    int data[MAX_SIZE]; // 存储数据的数组
+    int front; // 队首指针
+    int rear; // 队尾指针
+public:
+    Queue() : front(0), rear(0) {} // 构造函数，初始化队首和队尾指针
+    bool isEmpty(); // 判断队列是否为空
+    bool isFull(); // 判断队列是否已满
+    void enqueue(int x); // 入队操作
+    void dequeue(); // 出队操作
+    int getFront(); // 获取队首元素
+};
+
+bool Queue::isEmpty() {
+    return front == rear;
+}
+
+bool Queue::isFull() {
+    return (rear + 1) % MAX_SIZE == front;
+}
+
+void Queue::enqueue(int x) {
+    if (isFull()) {
+        cout << "Queue is full, cannot enqueue." << endl;
+        return;
+    }
+    data[rear] = x;
+    rear = (rear + 1) % MAX_SIZE;
+}
+
+void Queue::dequeue() {
+    if (isEmpty()) {
+        cout << "Queue is empty, cannot dequeue." << endl;
+        return;
+    }
+    front = (front + 1) % MAX_SIZE;
+}
+
+int Queue::getFront() {
+    if (isEmpty()) {
+        cout << "Queue is empty, cannot get front." << endl;
+        return -1;
+    }
+    return data[front];
+}
+
+int main() {
+    Queue q;
+    cout << "入队:" << endl;
+
+    q.enqueue(1);
+    q.enqueue(2);
+    q.enqueue(3);
+
+    cout << "出队:" << endl;
+    while (!q.isEmpty()) {
+        cout << q.getFront() << " ";
+        q.dequeue();
+    }
+    return 0;
+}
+//输出:
+入队:
+出队:
+1 2 3
+```
+
+这里我们使用了循环数组来实现队列，利用取模运算可以使队列的循环利用。在入队操作时，如果队列已满则输出错误信息；在出队操作和获取队首元素时，如果队列为空则同样输出错误信息。
+
+
+## 参考代码二：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+const int MAX_SIZE = 100; // 设定队列的最大容量
+
+class Queue {
+    private:
+        int data[MAX_SIZE]; // 队列的数据存储区域
+        int front; // 队首指针
+        int rear; // 队尾指针
+    public:
+        Queue() { // 构造函数初始化队列为空
+            front = -1;
+            rear = -1;
+        }
+        bool isEmpty() { // 判断队列是否为空
+            return front == -1 && rear == -1;
+        }
+        bool isFull() { // 判断队列是否已满
+            return (rear + 1) % MAX_SIZE == front;
+        }
+        void enqueue(int value) { // 入队操作
+            if (isFull()) { // 若队列已满，则不允许入队
+                cout << "Queue overflow!" << endl;
+                return;
+            }
+            if (isEmpty()) { // 若队列为空，则更新队首指针
+                front = 0;
+            }
+            rear = (rear + 1) % MAX_SIZE; // 更新队尾指针
+            data[rear] = value; // 将值加入队尾
+        }
+        int dequeue() { // 出队操作
+            if (isEmpty()) { // 若队列空，则无法出队
+                cout << "Queue underflow!" << endl;
+                return -1;
+            }
+            int value = data[front]; // 取出队首元素
+            if (front == rear) { // 若此时队列为空，则更新队首和队尾指针
+                front = -1;
+                rear = -1;
+            } else {
+                front = (front + 1) % MAX_SIZE; // 更新队首指针
+            }
+            return value;
+        }
+        int peek() { // 查看队首元素
+            if (isEmpty()) { // 若队列为空，则无法查看队首元素
+                cout << "Queue is empty!" << endl;
+                return -1;
+            }
+            return data[front];
+        }
+};
+
+int main() {
+    Queue q;
+    q.enqueue(1);
+    q.enqueue(2);
+    q.enqueue(3);
+    cout << "The front element is: " << q.peek() << endl; // 输出队首元素
+    q.dequeue();
+    cout << "The front element is: " << q.peek() << endl; // 再次输出队首元素
+    return 0;
+}
+//输出:
+The front element is: 1
+The front element is: 2
+```
+该实现使用类（class）来表示一个循环队列，具备入队（enqueue）、出队（dequeue）、查看队首元素（peek）、判断队列为空（isEmpty）和判断队列已满（isFull）等操作。在主函数中，我们创建了一个队列对象，并依次将元素 1、2 和 3 入队，然后输出队首元素并进行出队操作，再次输出队首元素。
+
+
+## 参考代码三：
+下面是一个使用数组实现队列（Queue）的 C++ 代码例子：
+```cpp
+#include <iostream>
+using namespace std;
+#define MAX_SIZE 100
+
+class Queue {
+private:
+    int arr[MAX_SIZE];
+    int front, rear;
+
+public:
+    Queue() { front = -1; rear = -1; }
+    void enqueue(int x);
+    int dequeue();
+    bool isEmpty();
+};
+
+void Queue::enqueue(int x) {
+    if (rear >= MAX_SIZE-1) {
+        cout << "队列已满" << endl;
+    } else {
+        if (front == -1) front = 0;
+        arr[++rear] = x;
+    }
+}
+
+int Queue::dequeue() {
+    if (front == -1 || front > rear) {
+        cout << "队列为空" << endl;
+        return 0;
+    } else {
+        int x = arr[front++];
+        return x;
+    }
+}
+
+bool Queue::isEmpty() {
+    return (front == -1 || front > rear);
+}
+
+int main(void) {
+   Queue queue;
+   cout << "入队: " << endl;
+   queue.enqueue(1);
+   queue.enqueue(2);
+   queue.enqueue(3);
+   queue.enqueue(4);
+   queue.enqueue(5);
+   cout << "出队: " << endl;
+   while (!queue.isEmpty()) {
+      int value = queue.dequeue();
+      cout << value << ",";
+   }
+   
+   return 0;
+}
+//输出:
+入队: 
+出队:
+1,2,3,4,5,
+```
+这个实现使用了一个大小为 MAX_SIZE 的整型数组，它的 enqueue() 函数将元素添加到数组中并更新 rear 变量，如果队列已满则会输出一条错误信息；dequeue() 函数从队头删除元素并返回它的值，如果队列为空也会输出一条错误信息；isEmpty() 函数检查队列是否为空。
