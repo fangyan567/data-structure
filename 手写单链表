@@ -1,0 +1,466 @@
+# 手写单链表
+
+## 参考代码一：
+下面是手写单链表的 C++ 实现示例代码，包括节点的插入、删除和遍历等基本操作：
+```cpp
+#include <iostream>
+
+using namespace std;
+
+// 节点结构体
+struct Node {
+    int data;
+    Node *next;
+};
+
+// 遍历链表并输出每个节点的值
+void traverse(Node *head) {
+    Node *p = head;
+    while (p != NULL) {
+        cout << p->data << " ";
+        p = p->next;
+    }
+    cout << endl;
+}
+
+// 在链表头部插入一个节点
+Node* insertAtHead(Node *head, int value) {
+    Node *newNode = new Node();
+    newNode->data = value;
+    newNode->next = head;
+    return newNode;
+}
+
+// 在链表尾部插入一个节点
+Node* insertAtTail(Node *head, int value) {
+    Node *newNode = new Node();
+    newNode->data = value;
+    newNode->next = NULL;
+    if (head == NULL) {
+        return newNode;
+    }
+    Node *p = head;
+    while (p->next != NULL) {
+        p = p->next;
+    }
+    p->next = newNode;
+    return head;
+}
+
+// 删除链表中指定值的节点
+Node* deleteNode(Node *head, int value) {
+    if (head == NULL) {
+        return NULL;
+    }
+    if (head->data == value) {
+        Node *p = head->next;
+        delete head;
+        return p;
+    }
+    Node *p = head;
+    while (p->next != NULL && p->next->data != value) {
+        p = p->next;
+    }
+    if (p->next != NULL) {
+        Node *q = p->next;
+        p->next = q->next;
+        delete q;
+    }
+    return head;
+}
+
+int main() {
+    Node *head = NULL;
+
+    cout << "在链表头部插入节点 :" << endl;
+    head = insertAtHead(head, 3);
+    head = insertAtHead(head, 2);
+    head = insertAtHead(head, 1);
+
+    cout << "遍历链表并输出每个节点的值 :" << endl;
+    traverse(head);
+
+    cout << "在链表尾部插入节点 :" << endl;
+    head = insertAtTail(head, 4);
+    traverse(head);
+
+    cout << "在链表删除值为2的节点 :" << endl;
+    head = deleteNode(head, 2);
+    cout << "遍历链表并输出每个节点的值 :" << endl;
+    traverse(head);
+    return 0;
+}
+//输出:
+在链表头部插入节点 :
+遍历链表并输出每个节点的值 :
+1 2 3
+在链表尾部插入节点 :
+1 2 3 4
+在链表删除值为2的节点 :
+遍历链表并输出每个节点的值 :
+1 3 4
+```
+这里我们定义了一个 Node 结构体来表示链表的节点，其中包含了一个 data 成员变量表示节点的数据，以及一个 next 指针成员变量表示下一个节点的地址。
+
+在上面的代码中，我们实现了以下三个基本操作：
+
+insertAtHead：在链表头部插入一个节点；
+insertAtTail：在链表尾部插入一个节点；
+deleteNode：删除链表中指定值的节点。
+其中，插入操作需要创建一个新的节点，并将其加入到链表中，而删除操作则需要找到要删除的节点，并修改其前一个节点的 next 指针。
+
+
+## 参考代码二：
+以下是一个简单的手写单链表 C++ 实现：
+```cpp
+#include <iostream>
+using namespace std;
+
+class Node {
+    public:
+        int val; // 节点值
+        Node* next; // 指向下一个节点的指针
+        Node(int value, Node* ptr = nullptr) : val(value), next(ptr) {} // 构造函数
+};
+
+class LinkedList {
+    private:
+        Node* head; // 头节点指针
+        int size; // 链表大小
+    public:
+        LinkedList() { // 构造函数初始化链表为空
+            head = nullptr;
+            size = 0;
+        }
+        bool isEmpty() { // 判断链表是否为空
+            return head == nullptr;
+        }
+        int getSize() { // 返回链表的大小
+            return size;
+        }
+        void prepend(int value) { // 在链表头部插入新节点
+            head = new Node(value, head);
+            ++size;
+        }
+        void append(int value) { // 在链表尾部插入新节点
+            if (isEmpty()) { // 若链表为空，则将新节点作为头节点
+                head = new Node(value);
+            } else {
+                Node* p = head;
+                while (p->next != nullptr) { // 找到最后一个节点
+                    p = p->next;
+                }
+                p->next = new Node(value); // 在最后一个节点后插入新节点
+            }
+            ++size;
+        }
+        void insert(int index, int value) { // 在指定位置插入新节点
+            if (index < 0 || index > size) { // 若下标越界，则无法插入
+                cout << "Invalid index!" << endl;
+                return;
+            }
+            if (index == 0) { // 若插入位置为链表头部
+                prepend(value);
+            } else if (index == size) { // 若插入位置为链表尾部
+                append(value);
+            } else {
+                Node* p = head;
+                for (int i = 0; i < index - 1; ++i) { // 找到插入位置前一个节点
+                    p = p->next;
+                }
+                p->next = new Node(value, p->next); // 在插入位置前一个节点后插入新节点
+                ++size;
+            }
+        }
+        void remove(int value) { // 删除第一个值等于给定值的节点
+            if (isEmpty()) { // 若链表为空，则无法删除
+                cout << "List is empty!" << endl;
+                return;
+            }
+            if (head->val == value) { // 若头节点为目标节点
+                Node* p = head;
+                head = head->next;
+                delete p;
+                --size;
+                return;
+            }
+            Node* p = head;
+            while (p->next != nullptr && p->next->val != value) { // 找到第一个符合条件的节点前一个节点
+                p = p->next;
+            }
+            if (p->next == nullptr) { // 若未找到符合条件的节点
+                cout << "Value not found!" << endl;
+            } else { // 若找到了符合条件的节点
+                Node* q = p->next;
+                p->next = q->next;
+                delete q;
+                --size;
+            }
+        }
+        void print() { // 打印链表
+            if (isEmpty()) { // 若链表为空，则直接输出 []
+                cout << "[]" << endl;
+            } else {
+                Node* p = head;
+                cout << "[" << p->val;
+                while (p->next != nullptr) { // 依次输出每个节点的值
+                    p = p->next;
+                    cout << ", " << p->val;
+                }
+                cout << "]" << endl;
+            }
+        }
+};
+
+int main() {
+    LinkedList list;
+    cout << "在链表尾部插入节点: " << endl;
+    list.append(1);
+    list.append(2);
+    cout << "输出链表节点的值: " << endl;
+    list.print();
+    cout << "在链表头部插入节点0: " << endl;
+    list.prepend(0);
+    cout << "输出链表节点的值: " << endl;
+    list.print(); // 输出 [0, 1, 2]
+
+    cout << "在位置3插入链表节点值为3的节点: " << endl;
+    list.insert(3, 3);
+    cout << "输出链表节点的值: " << endl;
+    list.print(); // 输出 [0, 1, 2, 3]
+    cout << "在链表删除值等于2的节点: " << endl;
+    list.remove(2);
+    list.print(); // 输出 [0, 1, 3]
+    return 0;
+}
+//输出:
+在链表尾部插入节点: 
+输出链表节点的值:
+[1, 2]
+在链表头部插入节点0:
+输出链表节点的值:
+[0, 1, 2]
+在位置3插入链表节点值为3的节点: 
+输出链表节点的值:
+[0, 1, 2, 3]
+在链表删除值等于2的节点:
+[0, 1, 3]
+```
+该实现使用类（class）来表示一个单链表，具备在头部插入节点（prepend）、在尾部插入节点（append）、在指定位置删除节点(remove)
+
+
+## 参考代码三：
+以下是手写单链表的C++代码示例：
+```cpp
+#include<iostream>
+using namespace std;
+
+// 定义链表节点结构体
+struct ListNode{
+    int val; //节点值
+    ListNode* next; //指向下一个节点的指针
+    ListNode(int x) : val(x), next(NULL) {} //构造函数，初始化val为x，next为空指针
+};
+
+// 插入节点
+void insert(ListNode* head, int val){
+    ListNode* node = new ListNode(val); //新建一个节点
+    node->next = head->next; //新节点指向头节点的下一个节点
+    head->next = node; //头节点指向新节点
+}
+
+// 删除节点
+void remove(ListNode* head, int val){
+    ListNode* cur = head->next;
+    ListNode* pre = head;
+
+    while(cur != NULL){
+        if(cur->val == val){ //找到要删除的节点
+            pre->next = cur->next; //前节点指向当前节点的下一个节点
+            delete cur; //释放当前节点的内存
+            break;
+        }
+        else{ //继续查找下一个节点
+            pre = pre->next;
+            cur = cur->next;
+        }
+    }
+}
+
+// 打印链表
+void printList(ListNode* head){
+    ListNode* cur = head->next;
+
+    while(cur != NULL){
+        cout << cur->val << " ";
+        cur = cur->next;
+    }
+    cout << endl;
+}
+
+int main(){
+    ListNode* head = new ListNode(0); //创建头节点
+    insert(head, 1);
+    insert(head, 2);
+    insert(head, 3);
+    cout << "输出链表节点的值: " << endl;
+    printList(head); //输出链表：3 2 1
+
+    cout << "在链表删除值等于2的节点: " << endl;
+    remove(head, 2);
+    cout << "输出链表节点的值: " << endl;
+    printList(head); //输出链表：3 1
+
+    return 0;
+}
+//输出:
+输出链表节点的值: 
+3 2 1 
+在链表删除值等于2的节点: 
+输出链表节点的值:        
+3 1
+```
+在上面的代码中，我们首先定义了一个链表节点结构体ListNode，其中包含了节点值val和指向下一个节点的指针next。
+
+接下来，我们实现了三个基本操作：插入节点、删除节点和打印链表。其中，插入节点时我们新建一个节点并将它插入到头节点的后面；删除节点时我们查找要删除的节点并释放它的内存；打印链表时我们从头节点开始遍历链表并输出每个节点的值。
+
+最后，在主函数中我们创建了一个头节点，并分别执行了插入、删除和打印操作，以演示单链表的基本使用方法。
+
+## 参考代码四：
+下面是一个简单的单链表（Singly Linked List）的 C++ 实现，包括 insertAtEnd()、insertAtBeginning()、deleteNode() 和 display() 函数:
+```cpp
+#include <iostream>
+
+using namespace std;
+
+// 定义一个单链表节点
+class Node {
+public:
+    int data;
+    Node* next;
+
+    Node(int value) {
+        data = value;
+        next = NULL;
+    }
+};
+
+// 定义一个单链表类
+class SinglyLinkedList {
+private:
+    Node* head;
+
+public:
+    SinglyLinkedList() {
+        head = NULL;
+    }
+
+    void insertAtEnd(int value);
+    void insertAtBeginning(int value);
+    void deleteNode(int value);
+    void display();
+};
+
+// 在单链表尾部插入新节点
+void SinglyLinkedList::insertAtEnd(int value) {
+    Node* newNode = new Node(value);
+
+    if (head == NULL) {
+        head = newNode;
+    } else {
+        Node* current = head;
+
+        while (current->next != NULL) {
+            current = current->next;
+        }
+
+        current->next = newNode;
+    }
+}
+
+// 在单链表头部插入新节点
+void SinglyLinkedList::insertAtBeginning(int value) {
+    Node* newNode = new Node(value);
+
+    if (head == NULL) {
+        head = newNode;
+    } else {
+        newNode->next = head;
+        head = newNode;
+    }
+}
+
+// 删除指定值的节点
+void SinglyLinkedList::deleteNode(int value) {
+    Node* current = head;
+    Node* prev = NULL;
+
+    while (current != NULL && current->data != value) {
+        prev = current;
+        current = current->next;
+    }
+
+    if (current == NULL) {
+        cout << "节点不存在" << endl;
+    } else if (prev == NULL) {
+        head = current->next;
+        delete current;
+    } else {
+        prev->next = current->next;
+        delete current;
+    }
+}
+
+// 显示单链表中的所有节点
+void SinglyLinkedList::display() {
+    Node* current = head;
+
+    while (current != NULL) {
+        cout << current->data << "->";
+        current = current->next;
+    }
+
+    cout << "NULL" << endl;
+}
+
+int main() {
+    SinglyLinkedList list;
+    cout << "在链表尾部插入节点: " << endl;
+    list.insertAtEnd(1);
+    list.insertAtEnd(2);
+    list.insertAtEnd(3);
+    cout << "输出链表节点的值: " << endl;
+    list.display();
+    cout << "在链表头部插入节点0: " << endl;
+    list.insertAtBeginning(0);
+    cout << "输出链表节点的值: " << endl;
+    list.display();
+    
+    cout << "在链表删除值等于2的节点: " << endl;
+    list.deleteNode(2);
+    cout << "输出链表节点的值: " << endl;
+    list.display();
+
+    return 0;
+}
+//输出:
+在链表尾部插入节点: 
+输出链表节点的值:
+1->2->3->NULL
+在链表头部插入节点0:
+输出链表节点的值:
+0->1->2->3->NULL
+在链表删除值等于2的节点:
+输出链表节点的值:
+0->1->3->NULL
+```
+
+这个实现使用了一个单链表节点类 Node，它有两个成员变量：data 和 next。其中 data 存储节点的值，next 存储指向下一个节点的指针。
+
+SinglyLinkedList 类包含四个成员函数：
+
+insertAtEnd() 在单链表尾部插入一个新节点；
+insertAtBeginning() 在单链表头部插入一个新节点；
+deleteNode() 删除指定值的节点；
+display() 显示单链表中的所有节点。
+在 main() 函数中，我们创建了一个 SinglyLinkedList 实例并向其中添加整数 1 到 3。接着，我们在单链表头部添加元素 0，并将整个单链表打印输出。然后，我们删除节点值为 2 的节点，并再次将整个单链表打印输出。这里是程序的输出结果：
