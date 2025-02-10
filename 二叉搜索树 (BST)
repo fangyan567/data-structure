@@ -1,0 +1,153 @@
+#include <iostream>
+
+class BST {
+private:
+    // 定义树节点结构
+    struct Node {
+        int value;
+        Node* left;
+        Node* right;
+
+        Node(int val) : value(val), left(nullptr), right(nullptr) {}
+    };
+
+    Node* root;
+
+    // 插入节点（递归实现）
+    Node* insert(Node* node, int value) {
+        if (node == nullptr) {
+            return new Node(value);
+        }
+        if (value < node->value) {
+            node->left = insert(node->left, value);
+        } else if (value > node->value) {
+            node->right = insert(node->right, value);
+        }
+        return node;
+    }
+
+    // 查找节点（递归实现）
+    bool search(Node* node, int value) const {
+        if (node == nullptr) {
+            return false;
+        }
+        if (value == node->value) {
+            return true;
+        } else if (value < node->value) {
+            return search(node->left, value);
+        } else {
+            return search(node->right, value);
+        }
+    }
+
+    // 查找最小节点
+    Node* findMin(Node* node) const {
+        while (node->left != nullptr) {
+            node = node->left;
+        }
+        return node;
+    }
+
+    // 删除节点（递归实现）
+    Node* remove(Node* node, int value) {
+        if (node == nullptr) {
+            return nullptr;
+        }
+        if (value < node->value) {
+            node->left = remove(node->left, value);
+        } else if (value > node->value) {
+            node->right = remove(node->right, value);
+        } else {
+            // 找到要删除的节点
+            if (node->left == nullptr) {
+                Node* temp = node->right;
+                delete node;
+                return temp;
+            } else if (node->right == nullptr) {
+                Node* temp = node->left;
+                delete node;
+                return temp;
+            } else {
+                // 节点有两个子节点，找到右子树的最小节点
+                Node* temp = findMin(node->right);
+                node->value = temp->value;
+                node->right = remove(node->right, temp->value);
+            }
+        }
+        return node;
+    }
+
+    // 中序遍历（递归实现）
+    void inorder(Node* node) const {
+        if (node == nullptr) {
+            return;
+        }
+        inorder(node->left);
+        std::cout << node->value << " ";
+        inorder(node->right);
+    }
+
+    // 释放树的内存（递归实现）
+    void clear(Node* node) {
+        if (node == nullptr) {
+            return;
+        }
+        clear(node->left);
+        clear(node->right);
+        delete node;
+    }
+
+public:
+    // 构造函数
+    BST() : root(nullptr) {}
+
+    // 析构函数
+    ~BST() {
+        clear(root);
+    }
+
+    // 插入值
+    void insert(int value) {
+        root = insert(root, value);
+    }
+
+    // 查找值
+    bool search(int value) const {
+        return search(root, value);
+    }
+
+    // 删除值
+    void remove(int value) {
+        root = remove(root, value);
+    }
+
+    // 中序遍历打印
+    void printInorder() const {
+        inorder(root);
+        std::cout << std::endl;
+    }
+};
+
+int main() {
+    BST bst;
+
+    bst.insert(10);
+    bst.insert(5);
+    bst.insert(15);
+    bst.insert(3);
+    bst.insert(7);
+    bst.insert(12);
+    bst.insert(18);
+
+    std::cout << "Inorder traversal: ";
+    bst.printInorder();
+
+    std::cout << "Search for 7: " << (bst.search(7) ? "Found" : "Not found") << std::endl;
+    std::cout << "Search for 20: " << (bst.search(20) ? "Found" : "Not found") << std::endl;
+
+    bst.remove(10);
+    std::cout << "Inorder traversal after removing 10: ";
+    bst.printInorder();
+
+    return 0;
+}
