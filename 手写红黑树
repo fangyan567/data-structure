@@ -1,0 +1,1399 @@
+# 基于C++构造一个红黑树
+## 参考代码一：
+以下是一个简单的C++实现，展示了如何手写一个红黑树：
+```cpp
+#include <iostream>
+
+using namespace std;
+
+// 节点结构体
+struct Node {
+    int val;
+    bool isRed;
+    Node* left;
+    Node* right;
+    Node(int v):val(v), isRed(true), left(nullptr), right(nullptr) {}
+};
+
+// 左旋操作
+Node* leftRotate(Node* node) {
+    Node* newRoot = node->right;
+    node->right = newRoot->left;
+    newRoot->left = node;
+    newRoot->isRed = node->isRed;
+    node->isRed = true;
+    return newRoot;
+}
+
+// 右旋操作
+Node* rightRotate(Node* node) {
+    Node* newRoot = node->left;
+    node->left = newRoot->right;
+    newRoot->right = node;
+    newRoot->isRed = node->isRed;
+    node->isRed = true;
+    return newRoot;
+}
+
+// 颜色翻转操作
+void flipColors(Node* node) {
+    node->isRed = !node->isRed;
+    node->left->isRed = !node->left->isRed;
+    node->right->isRed = !node->right->isRed;
+}
+
+// 插入操作
+Node* insert(Node* root, int v) {
+    if (root == nullptr) {
+        return new Node(v);
+    }
+
+    if (v < root->val) {
+        root->left = insert(root->left, v);
+    } else {
+        root->right = insert(root->right, v);
+    }
+
+    // 左旋
+    if (root->right && root->right->isRed && (!root->left || !root->left->isRed)) {
+        root = leftRotate(root);
+    }
+
+    // 右旋
+    if (root->left && root->left->isRed && root->left->left && root->left->left->isRed) {
+        root = rightRotate(root);
+    }
+
+    // 颜色翻转
+    if (root->left && root->left->isRed && root->right && root->right->isRed) {
+        flipColors(root);
+    }
+
+    return root;
+}
+
+// 中序遍历
+void inorderTraversal(Node* root) {
+    if (root == nullptr) return;
+    inorderTraversal(root->left);
+    cout << root->val << " ";
+    inorderTraversal(root->right);
+}
+
+int main() {
+    Node* root = nullptr;
+
+    // 插入操作
+    root = insert(root, 10);
+    root = insert(root, 20);
+    root = insert(root, 30);
+    root = insert(root, 40);
+    root = insert(root, 50);
+    root = insert(root, 25);
+
+    // 中序遍历
+    cout << "中序遍历结果: " << endl;
+    inorderTraversal(root);
+
+    return 0;
+}
+//输出:
+中序遍历结果: 
+10 20 25 30 40 50 
+```
+该程序实现了红黑树的插入和中序遍历操作。在每次插入节点时，都会通过左旋、右旋和颜色翻转等操作来维持红黑树的性质。
+
+## 参考代码二
+
+```cpp
+#include <iostream>
+
+enum Color {RED, BLACK};
+
+struct Node {
+    int data;
+    Color color;
+    Node *left, *right, *parent;
+
+    Node(int data) : data(data), color(RED), left(nullptr), right(nullptr), parent(nullptr) {}
+};
+
+class RedBlackTree {
+private:
+    Node *root;
+
+    void leftRotate(Node *x) {
+        Node *y = x->right;
+        x->right = y->left;
+        if (y->left != nullptr)
+            y->left->parent = x;
+        y->parent = x->parent;
+        if (x->parent == nullptr)
+            root = y;
+        else if (x == x->parent->left)
+            x->parent->left = y;
+        else
+            x->parent->right = y;
+        y->left = x;
+        x->parent = y;
+    }
+
+    void rightRotate(Node *y) {
+        Node *x = y->left;
+        y->left = x->right;
+        if (x->right != nullptr)
+            x->right->parent = y;
+        x->parent = y->parent;
+        if (y->parent == nullptr)
+            root = x;
+        else if (y == y->parent->left)
+            y->parent->left = x;
+        else
+            y->parent->right = x;
+        x->right = y;
+        y->parent = x;
+    }
+
+    void fixInsertRBTree(Node *z) {
+        while (z != root && z->parent->color == RED) {
+            if (z->parent == z->parent->parent->left) {
+                Node *y = z->parent->parent->right;
+                if (y != nullptr && y->color == RED) {
+                    z->parent->color = BLACK;
+                    y->color = BLACK;
+                    z->parent->parent->color = RED;
+                    z = z->parent->parent;
+                } else {
+                    if (z == z->parent->right) {
+                        z = z->parent;
+                        leftRotate(z);
+                    }
+                    z->parent->color = BLACK;
+                    z->parent->parent->color = RED;
+                    rightRotate(z->parent->parent);
+                }
+            } else {
+                Node *y = z->parent->parent->left;
+                if (y != nullptr && y->color == RED) {
+                    z->parent->color = BLACK;
+                    y->color = BLACK;
+                    z->parent->parent->color = RED;
+                    z = z->parent->parent;
+                } else {
+                    if (z == z->parent->left) {
+                        z = z->parent;
+                        rightRotate(z);
+                    }
+                    z->parent->color = BLACK;
+                    z->parent->parent->color = RED;
+                    leftRotate(z->parent->parent);
+                }
+            }
+        }
+        root->color = BLACK;
+    }
+
+    void inorderBST(Node *node) {
+        if (node == nullptr)
+            return;
+        inorderBST(node->left);
+        std::cout << node->data << " ";
+        inorderBST(node->right);
+    }
+
+public:
+    RedBlackTree() : root(nullptr) {}
+
+    void insert(int data) {
+        Node *z = new Node(data);
+        Node *y = nullptr;
+        Node *x = root;
+        while (x != nullptr) {
+            y = x;
+            if (z->data < x->data)
+                x = x->left;
+            else
+                x = x->right;
+        }
+        z->parent = y;
+        if (y == nullptr)
+            root = z;
+        else if (z->data < y->data)
+            y->left = z;
+        else
+            y->right = z;
+        fixInsertRBTree(z);
+    }
+
+    void inorder() {
+        inorderBST(root);
+    }
+};
+
+int main() {
+    RedBlackTree tree;
+    std::cout << "Inserting elements...\n";
+    tree.insert(7);
+    tree.insert(3);
+    tree.insert(18);
+    tree.insert(10);
+    tree.insert(22);
+    tree.insert(8);
+    tree.insert(11);
+    tree.insert(26);
+    tree.insert(2);
+    tree.insert(6);
+    tree.insert(13);
+    std::cout << "Inorder traversal of the constructed Red-Black tree is: " << std::endl;
+    tree.inorder();
+    return 0;
+}
+```
+
+
+## 参考代码三
+
+```cpp
+#include <iostream>
+using namespace std;
+
+enum Color {RED, BLACK};
+
+struct Node {
+    int key;
+    Color color;
+    Node *left, *right, *parent;
+   
+    Node(int key) : 
+        key(key), color(RED), left(nullptr), right(nullptr), parent(nullptr) {}
+};
+
+class RedBlackTree {
+private:
+    Node *root;
+
+    void rotateLeft(Node* node) {
+        Node* y = node->right;
+        node->right = y->left;
+        if (y->left != nullptr) {
+            y->left->parent = node;
+        }
+        y->parent = node->parent;
+        if (node->parent == nullptr) {
+            root = y;
+        } else if (node == node->parent->left) {
+            node->parent->left = y;
+        } else {
+            node->parent->right = y;
+        }
+        y->left = node;
+        node->parent = y;
+    }
+
+    void rotateRight(Node* node) {
+        Node* y = node->left;
+        node->left = y->right;
+        if (y->right != nullptr) {
+            y->right->parent = node;
+        }
+        y->parent = node->parent;
+        if (node->parent == nullptr) {
+            root = y;
+        } else if (node == node->parent->right) {
+            node->parent->right = y;
+        } else {
+            node->parent->left = y;
+        }
+        y->right = node;
+        node->parent = y;
+    }
+
+    void fixInsertion(Node* node) {
+        while (node != root && node->parent->color == RED) {
+            if (node->parent == node->parent->parent->left) {
+                Node* y = node->parent->parent->right;
+                if (y != nullptr && y->color == RED) {
+                    node->parent->color = BLACK;
+                    y->color = BLACK;
+                    node->parent->parent->color = RED;
+                    node = node->parent->parent;
+                } else {
+                    if (node == node->parent->right) {
+                        node = node->parent;
+                        rotateLeft(node);
+                    }
+                    node->parent->color = BLACK;
+                    node->parent->parent->color = RED;
+                    rotateRight(node->parent->parent);
+                }
+            } else {
+                Node* y = node->parent->parent->left;
+                if (y != nullptr && y->color == RED) {
+                    node->parent->color = BLACK;
+                    y->color = BLACK;
+                    node->parent->parent->color = RED;
+                    node = node->parent->parent;
+                } else {
+                    if (node == node->parent->left) {
+                        node = node->parent;
+                        rotateRight(node);
+                    }
+                    node->parent->color = BLACK;
+                    node->parent->parent->color = RED;
+                    rotateLeft(node->parent->parent);
+                }
+            }
+        }
+        root->color = BLACK; // Ensure the root is always black
+    }
+
+     void inorderBST(Node *node) {
+        if (node == nullptr)
+            return;
+        inorderBST(node->left);
+        std::cout << node->key << " ";
+        inorderBST(node->right);
+    }
+
+public:
+    RedBlackTree() : root(nullptr) {}
+
+    void insert(int key) {
+        Node* node = new Node(key);
+        Node* y = nullptr;
+        Node* x = root;
+        while (x != nullptr) {
+            y = x;
+            if (key < x->key) {
+                x = x->left;
+            } else {
+                x = x->right;
+            }
+        }
+        node->parent = y;
+        if (y == nullptr) {
+            root = node;
+        } else if (key < y->key) {
+            y->left = node;
+        } else {
+            y->right = node;
+        }
+        fixInsertion(node);
+    }
+
+    void inorder() {
+        inorderBST(root);
+    }
+};
+
+int main() {
+    RedBlackTree rbt;
+    rbt.insert(30);
+    rbt.insert(10);
+    rbt.insert(20);
+
+    rbt.insert(60);
+    rbt.insert(70);
+    rbt.insert(80);
+
+    rbt.insert(40);
+    rbt.insert(50);
+    rbt.insert(90);
+    
+    cout << "红黑树中序遍历: " << endl;
+    rbt.inorder();
+    return 0;
+}
+
+```
+
+
+## 参考代码四
+⛔紧急通知
+近期，用户访问量激增，官方大量处理账号，可能导致域名被污染、
+部分地区打不开等情况。为防止找不到我们请加入社群！！
+
+✔请各位加入社群，谨防失联！！！
+
+
+⭐特别说明
+老北鼻AI GPT最新域名：url.ai-node.com
+老北鼻AI导航最新域名：Lbb.Ai
+老北鼻AI 域名发布地址：Linkss.Lbbai.com
+
+手写单链表
+
+删除
+重试
+复制
+链表是一种常见的数据结构，它由一系列节点组成，每个节点包含一个数据元素和一个指向下一个节点的指针。单链表是其中一种常见形式，每个节点只有一个指针指向下一个节点，而没有指向前一个节点的指针。下面是手写单链表的示例代码：
+
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+class LinkedList:
+    def __init__(self):
+        self.head = None
+
+    def is_empty(self):
+        return self.head is None
+
+    def add(self, data):
+        new_node = Node(data)
+        new_node.next = self.head
+        self.head = new_node
+
+    def append(self, data):
+        new_node = Node(data)
+        if self.is_empty():
+            self.head = new_node
+        else:
+            current_node = self.head
+            while current_node.next is not None:
+                current_node = current_node.next
+            current_node.next = new_node
+
+    def insert(self, index, data):
+        if index == 0:
+            self.add(data)
+        else:
+            new_node = Node(data)
+            current_node = self.head
+            i = 0
+            while i < index-1 and current_node is not None:
+                current_node = current_node.next
+                i += 1
+            if current_node is None:
+                raise IndexError("Index out of range")
+            new_node.next = current_node.next
+            current_node.next = new_node
+
+    def remove(self, data):
+        if self.is_empty():
+            raise ValueError("List is empty")
+        if self.head.data == data:
+            self.head = self.head.next
+        else:
+            current_node = self.head
+            while current_node.next is not None and current_node.next.data != data:
+                current_node = current_node.next
+            if current_node.next is None:
+                raise ValueError("Data not found")
+            current_node.next = current_node.next.next
+
+    def get(self, index):
+        if self.is_empty():
+            raise IndexError("List is empty")
+        current_node = self.head
+        i = 0
+        while i < index and current_node is not None:
+            current_node = current_node.next
+            i += 1
+        if current_node is None:
+            raise IndexError("Index out of range")
+        return current_node.data
+
+    def index(self, data):
+        current_node = self.head
+        i = 0
+        while current_node is not None:
+            if current_node.data == data:
+                return i
+            current_node = current_node.next
+            i += 1
+        raise ValueError("Data not found")
+
+    def __str__(self):
+        current_node = self.head
+        result = ""
+        while current_node is not None:
+            result += str(current_node.data) + " -> "
+            current_node = current_node.next
+        return result + "None"
+这个实现包括以下方法：
+
+__init__：初始化链表，创建一个空的头节点；
+is_empty：判断链表是否为空；
+add：在链表头部添加一个节点；
+append：在链表尾部添加一个节点；
+insert：在指定位置插入一个节点；
+remove：删除指定值的节点；
+get：获取指定位置的节点的值；
+index：查找指定值在链表中的位置；
+__str__：将链表转换为字符串表示。
+使用示例：
+
+# 创建一个新的链表
+linked_list = LinkedList()
+
+# 添加节点
+linked_list.add(1)
+linked_list.append(2)
+linked_list.append(3)
+linked_list.insert(2, 4)  # [1, 2, 4, 3]
+
+# 删除节点
+linked_list.remove(2)  # [1, 4, 3]
+
+# 获取节点值和位置
+print(linked_list.get(1))  # 4
+print(linked_list.index(3))  # 2
+
+# 打印链表
+print(linked_list)  # 1 -> 4 -> 3 -> None
+手写单链表
+
+删除
+重试
+复制
+好的，下面是手写单链表的示例代码：
+
+class Node:
+    def __init__(self, data=None):
+        self.data = data
+        self.next = None
+
+class LinkedList:
+    def __init__(self):
+        self.head = None
+
+    def append(self, data):
+        new_node = Node(data)
+
+        if self.head is None:
+            self.head = new_node
+            return
+
+        current_node = self.head
+        while current_node.next is not None:
+            current_node = current_node.next
+
+        current_node.next = new_node
+
+    def prepend(self, data):
+        new_node = Node(data)
+
+        if self.head is None:
+            self.head = new_node
+            return
+
+        new_node.next = self.head
+        self.head = new_node
+
+    def insert_after_node(self, prev_node, data):
+        if not prev_node:
+            print("Previous node is not in the list")
+            return
+
+        new_node = Node(data)
+        new_node.next = prev_node.next
+        prev_node.next = new_node
+
+    def delete_node(self, key):
+        current_node = self.head
+
+        if current_node is not None and current_node.data == key:
+            self.head = current_node.next
+            current_node = None
+            return
+
+        prev_node = None
+        while current_node is not None and current_node.data != key:
+            prev_node = current_node
+            current_node = current_node.next
+
+        if current_node is None:
+            return
+
+        prev_node.next = current_node.next
+        current_node = None
+
+    def print_list(self):
+        current_node = self.head
+        while current_node is not None:
+            print(current_node.data)
+            current_node = current_node.next
+上述代码中，我们定义了两个类：Node 和 LinkedList。Node 类用于表示链表中的一个节点，它包含一个数据域和一个指向下一个节点的指针。LinkedList 类用于表示整个链表，它包含一个指向链表头部的指针。
+
+下面是 LinkedList 类的各个方法的功能：
+
+append(data)：在链表末尾添加一个新节点。
+prepend(data)：在链表头部添加一个新节点。
+insert_after_node(prev_node, data)：在指定的节点后面插入一个新节点。
+delete_node(key)：删除指定值的节点。
+print_list()：打印整个链表。
+你可以根据需要调用这些方法来操作链表。
+
+QUIC协议
+
+删除
+重试
+复制
+QUIC（全称Quick UDP Internet Connections）是一种基于UDP协议的传输层协议，由Google在2012年提出。它旨在提供更快的连接建立和更低的延迟，同时保证传输的安全性。
+
+QUIC协议的主要特点包括：
+
+基于UDP协议：QUIC协议是基于UDP协议的，这意味着它可以绕过TCP协议的一些限制，如TCP的三次握手和拥塞控制算法。
+
+快速连接建立：QUIC协议使用TLS加密来建立连接，避免了TCP协议中的三次握手过程。因此，QUIC可以更快地建立连接，减少了连接建立的延迟。
+
+多路复用：QUIC协议支持多路复用，即可以在同一个连接上传输多个数据流，这可以提高网络的利用率和传输效率。
+
+错误恢复：QUIC协议可以在出现网络错误或丢包时快速恢复，而不会像TCP协议那样需要等待超时重传。
+
+安全性：QUIC协议使用TLS加密来保证数据传输的安全性，同时也支持0-RTT加密，可以在不进行握手的情况下进行加密传输。
+
+总的来说，QUIC协议在传输效率、安全性和错误恢复等方面都有很大的优势，已经被越来越多的互联网公司采用，如Google、Facebook、微软等。
+
+C++手写单链表
+
+删除
+重试
+复制
+好的，以下是一个基于C++的手写单链表示例代码：
+
+#include <iostream>
+
+using namespace std;
+
+// 定义链表节点结构体
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode(int x) : val(x), next(NULL) {}
+};
+
+class MyLinkedList {
+public:
+    /** Initialize your data structure here. */
+    MyLinkedList() {
+        head = NULL;
+    }
+    
+    /** Get the value of the index-th node in the linked list. If the index is invalid, return -1. */
+    int get(int index) {
+        if (index < 0 || index >= size) {
+            return -1;
+        }
+        ListNode *curr = head;
+        for (int i = 0; i < index; i++) {
+            curr = curr->next;
+        }
+        return curr->val;
+    }
+    
+    /** Add a node of value val before the first element of the linked list. After the insertion, the new node will be the first node of the linked list. */
+    void addAtHead(int val) {
+        ListNode *newNode = new ListNode(val);
+        newNode->next = head;
+        head = newNode;
+        size++;
+    }
+    
+    /** Append a node of value val to the last element of the linked list. */
+    void addAtTail(int val) {
+        ListNode *newNode = new ListNode(val);
+        if (!head) {
+            head = newNode;
+        } else {
+            ListNode *curr = head;
+            while (curr->next) {
+                curr = curr->next;
+            }
+            curr->next = newNode;
+        }
+        size++;
+    }
+    
+    /** Add a node of value val before the index-th node in the linked list. If index equals to the length of linked list, the node will be appended to the end of linked list. If index is greater than the length, the node will not be inserted. */
+    void addAtIndex(int index, int val) {
+        if (index <= 0) {
+            addAtHead(val);
+        } else if (index == size) {
+            addAtTail(val);
+        } else if (index > size) {
+            return;
+        } else {
+            ListNode *newNode = new ListNode(val);
+            ListNode *curr = head;
+            for (int i = 0; i < index - 1; i++) {
+                curr = curr->next;
+            }
+            newNode->next = curr->next;
+            curr->next = newNode;
+            size++;
+        }
+    }
+    
+    /** Delete the index-th node in the linked list, if the index is valid. */
+    void deleteAtIndex(int index) {
+        if (index < 0 || index >= size) {
+            return;
+        }
+        if (index == 0) {
+            head = head->next;
+        } else {
+            ListNode *curr = head;
+            for (int i = 0; i < index - 1; i++) {
+                curr = curr->next;
+            }
+            curr->next = curr->next->next;
+        }
+        size--;
+    }
+    
+private:
+    ListNode *head;
+    int size = 0;
+};
+
+int main() {
+    MyLinkedList *obj = new MyLinkedList();
+    obj->addAtHead(1);
+    obj->addAtTail(3);
+    obj->addAtIndex(1, 2);
+    cout << obj->get(1) << endl;
+    obj->deleteAtIndex(1);
+    cout << obj->get(1) << endl;
+    return 0;
+}
+该示例代码中包括了添加头节点、添加尾节点、添加中间节点、删除节点和获取节点值等常用功能。
+
+C++11新特性
+
+删除
+重试
+复制
+C++11是C++语言的一个重要版本，引入了很多新特性，以下是其中一些新特性的介绍：
+
+自动类型推导：auto关键字可以根据变量的初始化值自动推导出变量的类型，例如：auto i = 1; 自动推导出i的类型为int。
+
+范围for循环：使用for(auto i : container)语法可以快速遍历容器中的元素，例如：for(auto i : vec)。
+
+lambda表达式：lambda表达式是一个匿名函数，可以用于定义函数对象或回调函数，例如：auto sum = [](int a, int b) { return a + b; };。
+
+多线程支持：引入了std::thread类，可以方便地创建和控制线程。
+
+智能指针：引入了std::shared_ptr、std::weak_ptr和std::unique_ptr等智能指针类，可以自动管理动态内存，避免内存泄漏。
+
+新的容器和算法：引入了std::array、std::unordered_map和std::sort等新容器和算法，增强了C++的数据结构和算法能力。
+
+nullptr：nullptr是一个空指针常量，可以代替NULL或0，更加类型安全。
+
+静态断言：static_assert可以在编译时检查条件是否成立，如果不成立则编译错误。
+
+右值引用：引入了&&符号，可以实现移动语义和完美转发，提高了程序的效率和可读性。
+
+以上是C++11的一些主要特性，这些特性可以让C++程序更加现代化、高效和安全。
+
+虚函数机制
+
+删除
+重试
+复制
+虚函数机制是C++中实现多态的关键，它通过动态绑定实现运行时多态。
+
+虚函数是在基类中定义的虚函数，在派生类中可以重新定义（覆盖）该虚函数。在使用基类指针或引用指向派生类对象时，如果该基类中有虚函数被重新定义，则会根据实际对象类型执行相应的虚函数。这就是动态绑定的过程，也称为运行时多态。
+
+实现虚函数的机制是：在对象的内存布局中增加一个虚函数表指针（vptr），指向该对象所属类的虚函数表（vtable）。虚函数表是一个存储虚函数地址的表格，每个类（包括基类和派生类）都有自己的虚函数表，当调用虚函数时，会通过vptr找到该对象所属类的虚函数表，然后根据虚函数在表格中的位置调用相应的函数。
+
+虚函数机制的优点是：可以实现运行时多态，提高程序的灵活性和可扩展性；同时也方便了类的继承和派生，减少了代码的重复编写。
+
+虚函数机制的缺点是：会增加对象的内存消耗和函数调用的开销，因为每个对象都要有一个vptr指针，并且每次调用虚函数都要先查找虚函数表，然后再调用相应的函数。
+
+C++11智能指针
+
+删除
+重试
+复制
+C++11引入了智能指针（smart pointer）来解决原始指针所带来的内存泄漏、野指针以及空指针等问题。智能指针是一种RAII（Resource Acquisition Is Initialization）技术，即资源获取即初始化的技术。它能够自动管理动态分配的内存，当不再需要使用时，会自动释放其持有的资源，从而避免了内存泄漏和野指针的问题。
+
+C++11提供了三种智能指针：unique_ptr、shared_ptr和weak_ptr。
+
+unique_ptr：独占式智能指针，不能被复制和共享，使用move语义进行所有权的转移。
+shared_ptr：共享式智能指针，可以被多个shared_ptr共享，使用引用计数进行内存管理。
+weak_ptr：弱引用式智能指针，不会增加引用计数，可以解决shared_ptr的循环引用问题。
+智能指针使用起来很方便，可以避免手动管理内存所带来的麻烦和风险。但是，需要注意的是，在使用智能指针时，要避免出现循环引用的情况，以免出现内存泄漏。
+
+TCP和UDP区别
+
+删除
+重试
+复制
+TCP（Transmission Control Protocol）和UDP（User Datagram Protocol）是网络传输层中常见的两种协议，它们有以下几点区别：
+
+连接方式：TCP是面向连接的协议，传输数据之前需要先建立连接；而UDP是面向无连接的协议，不需要先建立连接就可以直接传输数据。
+
+可靠性：TCP是可靠的传输协议，传输数据时会进行数据校验和确认，保证数据的可靠性；而UDP是不可靠的传输协议，不会进行确认和校验，传输的数据可能会丢失或者乱序。
+
+速度：UDP的传输速度比TCP快，因为UDP没有TCP那么多的数据校验和确认等机制，而且UDP的数据包较小，传输效率更高。
+
+适用场景：TCP适用于对数据可靠性要求较高、数据量较大的场景，如文件传输、电子邮件等；而UDP适用于对数据实时性要求较高、数据量较小的场景，如音视频传输、实时游戏等。
+
+总之，TCP和UDP各有优缺点，需要根据实际情况选择合适的协议。
+
+手写栈C++
+
+删除
+重试
+复制
+以下是一个基于C++的手写栈的示例代码，包括了栈的初始化、入栈、出栈、获取栈顶元素和判断栈是否为空等常用功能。
+
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+template <typename T>
+class Stack {
+private:
+    vector<T> data; // 存储栈中元素的数组
+public:
+    // 初始化栈
+    Stack() {}
+
+    // 入栈操作
+    void push(T item) {
+        data.push_back(item);
+    }
+
+    // 出栈操作
+    T pop() {
+        T item = data.back();
+        data.pop_back();
+        return item;
+    }
+
+    // 获取栈顶元素
+    T top() {
+        return data.back();
+    }
+
+    // 判断栈是否为空
+    bool empty() {
+        return data.empty();
+    }
+};
+
+int main() {
+    Stack<int> s; // 创建一个整型栈
+
+    // 入栈操作
+    s.push(5);
+    s.push(10);
+    s.push(15);
+
+    // 出栈操作
+    cout << s.pop() << endl; // 15
+    cout << s.pop() << endl; // 10
+
+    // 获取栈顶元素
+    cout << s.top() << endl; // 5
+
+    // 判断栈是否为空
+    cout << s.empty() << endl; // 0（false）
+
+    return 0;
+}
+以上示例代码中，我们使用了一个vector来存储栈中的元素。栈的入栈和出栈操作分别使用了vector的push_back和pop_back方法。获取栈顶元素和判断栈是否为空的操作也很简单，直接使用vector的back和empty方法即可。
+
+数组实现栈
+
+删除
+重试
+复制
+好的，下面是利用数组实现栈的示例代码：
+
+class Stack:
+    def __init__(self):
+        self.stack = []
+    
+    def push(self, item):
+        self.stack.append(item)
+    
+    def pop(self):
+        if not self.is_empty():
+            return self.stack.pop()
+        else:
+            return None
+    
+    def peek(self):
+        if not self.is_empty():
+            return self.stack[-1]
+        else:
+            return None
+    
+    def is_empty(self):
+        return len(self.stack) == 0
+    
+    def size(self):
+        return len(self.stack)
+这里我们定义了一个 Stack 类，其中包含了 push、pop、peek、is_empty 和 size 等方法，分别用于入栈、出栈、查看栈顶元素、判断栈是否为空以及获取栈的大小。
+
+在这个类中，我们使用了 Python 中的列表来实现栈，并利用 append 和 pop 方法进行入栈和出栈操作。同时，我们还实现了 peek 方法，用于获取栈顶元素而不弹出它。
+
+下面是一个简单的测试：
+
+s = Stack()
+s.push(1)
+s.push(2)
+s.push(3)
+print(s.peek())  # 输出 3
+print(s.pop())  # 输出 3
+print(s.peek())  # 输出 2
+print(s.is_empty())  # 输出 False
+print(s.size())  # 输出 2
+希望这个示例代码能够帮助你理解如何使用数组实现栈。
+
+手写队列
+
+删除
+重试
+复制
+好的，下面是利用列表实现队列的示例代码：
+
+class Queue:
+    def __init__(self):
+        self.queue = []
+    
+    def enqueue(self, item):
+        self.queue.append(item)
+    
+    def dequeue(self):
+        if not self.is_empty():
+            return self.queue.pop(0)
+        else:
+            return None
+    
+    def is_empty(self):
+        return len(self.queue) == 0
+    
+    def size(self):
+        return len(self.queue)
+这里我们定义了一个 Queue 类，其中包含了 enqueue、dequeue、is_empty 和 size 等方法，分别用于入队、出队、判断队列是否为空以及获取队列的大小。
+
+在这个类中，我们使用了 Python 中的列表来实现队列，并利用 append 和 pop(0) 方法进行入队和出队操作。
+
+下面是一个简单的测试：
+
+q = Queue()
+q.enqueue(1)
+q.enqueue(2)
+q.enqueue(3)
+print(q.dequeue())  # 输出 1
+print(q.dequeue())  # 输出 2
+print(q.is_empty())  # 输出 False
+print(q.size())  # 输出 1
+希望这个示例代码能够帮助你理解如何使用列表实现队列。
+
+手写单链表C++
+
+删除
+重试
+复制
+好的，下面是手写单链表的 C++ 实现示例代码，包括节点的插入、删除和遍历等基本操作：
+
+#include <iostream>
+
+using namespace std;
+
+// 节点结构体
+struct Node {
+    int data;
+    Node *next;
+};
+
+// 遍历链表并输出每个节点的值
+void traverse(Node *head) {
+    Node *p = head;
+    while (p != NULL) {
+        cout << p->data << " ";
+        p = p->next;
+    }
+    cout << endl;
+}
+
+// 在链表头部插入一个节点
+Node* insertAtHead(Node *head, int value) {
+    Node *newNode = new Node();
+    newNode->data = value;
+    newNode->next = head;
+    return newNode;
+}
+
+// 在链表尾部插入一个节点
+Node* insertAtTail(Node *head, int value) {
+    Node *newNode = new Node();
+    newNode->data = value;
+    newNode->next = NULL;
+    if (head == NULL) {
+        return newNode;
+    }
+    Node *p = head;
+    while (p->next != NULL) {
+        p = p->next;
+    }
+    p->next = newNode;
+    return head;
+}
+
+// 删除链表中指定值的节点
+Node* deleteNode(Node *head, int value) {
+    if (head == NULL) {
+        return NULL;
+    }
+    if (head->data == value) {
+        Node *p = head->next;
+        delete head;
+        return p;
+    }
+    Node *p = head;
+    while (p->next != NULL && p->next->data != value) {
+        p = p->next;
+    }
+    if (p->next != NULL) {
+        Node *q = p->next;
+        p->next = q->next;
+        delete q;
+    }
+    return head;
+}
+
+int main() {
+    Node *head = NULL;
+    head = insertAtHead(head, 3);
+    head = insertAtHead(head, 2);
+    head = insertAtHead(head, 1);
+    traverse(head);
+    head = insertAtTail(head, 4);
+    head = deleteNode(head, 2);
+    traverse(head);
+    return 0;
+}
+这里我们定义了一个 Node 结构体来表示链表的节点，其中包含了一个 data 成员变量表示节点的数据，以及一个 next 指针成员变量表示下一个节点的地址。
+
+在上面的代码中，我们实现了以下三个基本操作：
+
+insertAtHead：在链表头部插入一个节点；
+insertAtTail：在链表尾部插入一个节点；
+deleteNode：删除链表中指定值的节点。
+其中，插入操作需要创建一个新的节点，并将其加入到链表中，而删除操作则需要找到要删除的节点，并修改其前一个节点的 next 指针。
+
+手写红黑树C++
+
+删除
+重试
+复制
+红黑树是一种自平衡的二叉搜索树，它的平衡性保证了在最坏情况下，查找、插入和删除操作的时间复杂度都是 O(log n)。
+
+下面是一个基本的红黑树的 C++ 实现代码：
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+enum Color { RED, BLACK };
+
+template <typename T>
+class Node {
+public:
+    T data;
+    Color color;
+    Node* left;
+    Node* right;
+    Node* parent;
+
+    Node(T data) {
+        this->data = data;
+        color = RED;
+        left = right = parent = NULL;
+    }
+};
+
+template <typename T>
+class RedBlackTree {
+private:
+    Node<T>* root;
+
+    void leftRotate(Node<T>* x) {
+        Node<T>* y = x->right;
+        x->right = y->left;
+        if (y->left != NULL) {
+            y->left->parent = x;
+        }
+        y->parent = x->parent;
+        if (x->parent == NULL) {
+            root = y;
+        } else if (x == x->parent->left) {
+            x->parent->left = y;
+        } else {
+            x->parent->right = y;
+        }
+        y->left = x;
+        x->parent = y;
+    }
+
+    void rightRotate(Node<T>* x) {
+        Node<T>* y = x->left;
+        x->left = y->right;
+        if (y->right != NULL) {
+            y->right->parent = x;
+        }
+        y->parent = x->parent;
+        if (x->parent == NULL) {
+            root = y;
+        } else if (x == x->parent->right) {
+            x->parent->right = y;
+        } else {
+            x->parent->left = y;
+        }
+        y->right = x;
+        x->parent = y;
+    }
+
+    void insertFixup(Node<T>* z) {
+        while (z->parent != NULL && z->parent->color == RED) {
+            if (z->parent == z->parent->parent->left) {
+                Node<T>* y = z->parent->parent->right;
+                if (y != NULL && y->color == RED) {
+                    z->parent->color = BLACK;
+                    y->color = BLACK;
+                    z->parent->parent->color = RED;
+                    z = z->parent->parent;
+                } else {
+                    if (z == z->parent->right) {
+                        z = z->parent;
+                        leftRotate(z);
+                    }
+                    z->parent->color = BLACK;
+                    z->parent->parent->color = RED;
+                    rightRotate(z->parent->parent);
+                }
+            } else {
+                Node<T>* y = z->parent->parent->left;
+                if (y != NULL && y->color == RED) {
+                    z->parent->color = BLACK;
+                    y->color = BLACK;
+                    z->parent->parent->color = RED;
+                    z = z->parent->parent;
+                } else {
+                    if (z == z->parent->left) {
+                        z = z->parent;
+                        rightRotate(z);
+                    }
+                    z->parent->color = BLACK;
+                    z->parent->parent->color = RED;
+                    leftRotate(z->parent->parent);
+                }
+            }
+        }
+        root->color = BLACK;
+    }
+
+    void transplant(Node<T>* u, Node<T>* v) {
+        if (u->parent == NULL) {
+            root = v;
+        } else if (u == u->parent->left) {
+            u->parent->left = v;
+        } else {
+            u->parent->right = v;
+        }
+        v->parent = u->parent;
+    }
+
+    Node<T>* minimum(Node<T>* x) {
+        while (x->left != NULL) {
+            x = x->left;
+        }
+        return x;
+    }
+
+    void deleteFixup(Node<T>* x) {
+        while (x != root && x->color == BLACK) {
+            if (x == x->parent->left) {
+                Node<T>* w = x->parent->right;
+                if (w != NULL && w->color == RED) {
+                    w->color = BLACK;
+                    x->parent->color = RED;
+                    leftRotate(x->parent);
+                    w = x->parent->right;
+                }
+                if ((w->left == NULL || w->left->color == BLACK) && (w->right == NULL || w->right->color == BLACK)) {
+                    w->color = RED;
+                    x = x->parent;
+                } else {
+                    if (w->right == NULL || w->right->color == BLACK) {
+                        w->left->color = BLACK;
+                        w->color = RED;
+                        rightRotate(w);
+                        w = x->parent->right;
+                    }
+                    w->color = x->parent->color;
+                    x->parent->color = BLACK;
+                    w->right->color = BLACK;
+                    leftRotate(x->parent);
+                    x = root;
+                }
+            } else {
+                Node<T>* w = x->parent->left;
+                if (w != NULL && w->color == RED) {
+                    w->color = BLACK;
+                    x->parent->color = RED;
+                    rightRotate(x->parent);
+                    w = x->parent->left;
+                }
+                if ((w->left == NULL || w->left->color == BLACK) && (w->right == NULL || w->right->color == BLACK)) {
+                    w->color = RED;
+                    x = x->parent;
+                } else {
+                    if (w->left == NULL || w->left->color == BLACK) {
+                        w->right->color = BLACK;
+                        w->color = RED;
+                        leftRotate(w);
+                        w = x->parent->left;
+                    }
+                    w->color = x->parent->color;
+                    x->parent->color = BLACK;
+                    w->left->color = BLACK;
+                    rightRotate(x->parent);
+                    x = root;
+                }
+            }
+        }
+        x->color = BLACK;
+    }
+
+public:
+    RedBlackTree() {
+        root = NULL;
+    }
+
+    Node<T>* getRoot() {
+        return root;
+    }
+
+    void insert(T data) {
+        Node<T>* z = new Node<T>(data);
+        Node<T>* y = NULL;
+        Node<T>* x = root;
+        while (x != NULL) {
+            y = x;
+            if (z->data < x->data) {
+                x = x->left;
+            } else {
+                x = x->right;
+            }
+        }
+        z->parent = y;
+        if (y == NULL) {
+            root = z;
+        } else if (z->data < y->data) {
+            y->left = z;
+        } else {
+            y->right = z;
+        }
+        insertFixup(z);
+    }
+
+    void remove(T data) {
+        Node<T>* z = root;
+        while (z != NULL) {
+            if (data == z->data) {
+                break;
+            } else if (data < z->data) {
+                z = z->left;
+            } else {
+                z = z->right;
+            }
+        }
+        if (z == NULL) {
+            return;
+        }
+        Node<T>* x = NULL;
+        Node<T>* y = z;
+        Color y_original_color = y->color;
+        if (z->left == NULL) {
+            x = z->right;
+            transplant(z, z->right);
+        } else if (z->right == NULL) {
+            x = z->left;
+            transplant(z, z->left);
+        } else {
+            y = minimum(z->right);
+            y_original_color = y->color;
+            x = y->right;
+            if (y->parent == z) {
+                x->parent = y;
+            } else {
+                transplant(y, y->right);
+                y->right = z->right;
+                y->right->parent = y;
+            }
+            transplant(z, y);
+            y->left = z->left;
+            y->left->parent = y;
+            y->color = z->color;
+        }
+        if (y_original_color == BLACK) {
+            deleteFixup(x);
+        }
+        delete z;
+    }
+
+    void inorderTraversal(Node<T>* x) {
+        if (x == NULL) {
+            return;
+        }
+        inorderTraversal(x->left);
+        cout << x->data << " ";
+        inorderTraversal(x->right);
+    }
+};
+
+int main() {
+    RedBlackTree<int> rbtree;
+    rbtree.insert(10);
+    rbtree.insert(20);
+    rbtree.insert(30);
+    rbtree.insert(15);
+    rbtree.insert(18);
+    rbtree.insert(25);
+    rbtree.insert(40);
+    rbtree.inorderTraversal(rbtree.getRoot());
+    cout << endl;
+    rbtree.remove(20);
+    rbtree.inorderTraversal(rbtree.getRoot());
+    cout << endl;
+    return 0;
+}
+
+//输出:
+红黑树插入节点: 
+红黑树中序遍历结果:
+10 15 18 20 25 30 40
+红黑树删除值为20的节点:
+10 15 18 25 30 40
+```
+
+在这个实现中，我们定义了一个 Node 类来表示红黑树的节点，节点包含数据、颜色、左子节点、右子节点和父节点。颜色只有红和黑两种，用枚举类型 Color 来表示。
+
+
+```bash
+我们还定义了一个 RedBlackTree 类，它包含一个指向根节点的指针 root，以及一些函数来实现红黑树的基本操作。这些操作包括：
+
+leftRotate：左旋操作。
+rightRotate：右旋操作。
+insert：插入操作。
+insertFixup：插入修复操作。
+remove：删除操作。
+transplant：替换操作。
+minimum：查找最小节点。
+deleteFixup：删除修复操作。
+inorderTraversal：中序遍历操作。
+在 insert 和 remove 操作中，我们都使用了一个辅助函数 transplant，这个函数用于将一个节点替换为另一个节点。
+```
+
+在 insert 操作中，我们首先将新节点插入到红黑树中，然后通过 insertFixup 函数来修复可能破坏红黑树性质
