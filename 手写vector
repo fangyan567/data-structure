@@ -1,0 +1,313 @@
+# 基于C++实现vector
+
+## 参考代码一
+
+```cpp
+#include <iostream>
+
+template <class T>
+class Vector {
+private:
+    T *arr;
+    int capacity;
+    int size;
+
+public:
+    Vector() : arr(nullptr), capacity(0), size(0) {}
+
+    void push_back(const T &val) {
+        if (size == 0) {
+            capacity = 1;
+            arr = new T[capacity];
+        } else if (size == capacity) {
+            capacity *= 2;
+            T *temp = new T[capacity];
+
+            for (int i = 0; i < size; ++i)
+                temp[i] = arr[i];
+                
+            delete[] arr;
+            arr = temp;
+        }
+        arr[size++] = val;
+    }
+
+    void pop_back() {
+        if (size > 0)
+            --size;
+    }
+
+    T& operator[](int idx) {
+        return arr[idx];
+    }
+
+    const T& operator[](int idx) const {
+        return arr[idx];
+    }
+
+    int getSize() const {
+        return size;
+    }
+
+    int getCapacity() const {
+        return capacity;
+    }
+
+    ~Vector() {
+        if (arr != nullptr)
+            delete[] arr;
+    }
+};
+
+int main() {
+    Vector<int> vec;
+    std::cout << "Pushing back elements...\n";
+
+    for (int i = 1; i <= 10; ++i)
+        vec.push_back(i);
+
+    std::cout << "Vector size is: " << vec.getSize() << "\n";
+    std::cout << "Vector capacity is: " << vec.getCapacity() << "\n";
+    std::cout << "Elements in vector are: ";
+
+    for (int i = 0; i < vec.getSize(); ++i)
+        std::cout << vec[i] << " ";
+
+    std::cout << "\nPopping last element...\n";
+    vec.pop_back();
+    std::cout << "Vector size is: " << vec.getSize() << "\n";
+    std::cout << "Vector capacity is: " << vec.getCapacity() << "\n";
+    std::cout << "Elements in vector are: ";
+
+    for (int i = 0; i < vec.getSize(); ++i)
+        std::cout << vec[i] << " ";
+
+    return 0;
+}
+
+//输出:
+Pushing back elements...
+Vector size is: 10
+Vector capacity is: 16
+Elements in vector are: 1 2 3 4 5 6 7 8 9 10
+Popping last element...
+Vector size is: 9
+Vector capacity is: 16
+Elements in vector are: 1 2 3 4 5 6 7 8 9
+```
+在这个代码中，实现了以下操作：
+
+push_back：将新元素添加到向量的末尾。
+pop_back：从向量的末尾删除最后一个元素。
+操作符[]：允许通过索引访问元素。
+getSize：返回向量中元素的数量。
+getCapacity：返回向量分配的内部数组的大小。
+析构函数：释放内存
+
+## 参考代码二
+为了实现一个C++的vector，我们需要考虑以下几个方面：
+
+数据结构：vector通常是使用动态数组来实现的。因此，我们需要使用一个指针来存储动态数组的地址，并使用一个变量来跟踪vector中元素的数量和容量。
+
+内存管理：vector应该能够动态增长和缩小大小，因此我们需要实现内存管理函数以进行内存分配和释放。
+
+迭代器：vector应该支持迭代器，以便用户可以遍历它的元素。
+
+下面是一个简单的向量实现示例：
+```cpp
+#include <iostream>
+
+template<typename T>
+class Vector {
+public:
+    Vector() 
+        : m_data(nullptr), m_size(0), m_capacity(0)
+    {}
+
+    ~Vector() {
+        delete[] m_data;
+    }
+
+    void push_back(const T& value) {
+        if (m_size >= m_capacity)
+            reserve(m_capacity == 0 ? 1 : m_capacity * 2);
+
+        m_data[m_size++] = value;
+    }
+
+    void pop_back() {
+        if (m_size > 0)
+            --m_size;
+    }
+
+    T& operator[](size_t index) {
+        return m_data[index];
+    }
+
+    const T& operator[](size_t index) const {
+        return m_data[index];
+    }
+
+    size_t size() const {
+        return m_size;
+    }
+
+    bool empty() const {
+        return m_size == 0;
+    }
+
+    void clear() {
+        m_size = 0;
+    }
+
+    void reserve(size_t capacity) {
+        if (capacity <= m_capacity)
+            return;
+
+        T* newData = new T[capacity];
+
+        for (size_t i = 0; i < m_size; ++i)
+            newData[i] = m_data[i];
+
+        delete[] m_data;
+        m_data = newData;
+        m_capacity = capacity;
+    }
+
+private:
+    T* m_data;
+    size_t m_size;
+    size_t m_capacity;
+};
+
+int main() {
+    Vector<int> vec;
+
+    vec.push_back(1);
+    vec.push_back(2);
+    vec.push_back(3);
+    
+    std::cout << "遍历结果 :" << std::endl; 
+    for (size_t i = 0; i < vec.size(); ++i)
+        std::cout << vec[i] << " ";
+
+    vec.pop_back();
+
+    std::cout << "\nvec Size: " << vec.size() << "\n";
+
+    return 0;
+}
+
+//输出:
+遍历结果 :
+1 2 3
+vec Size: 2
+```
+
+该示例实现了一个简单的向量类，支持以下操作：
+
+push_back(): 向向量末尾添加元素。
+pop_back(): 从向量末尾删除元素。
+operator[]: 访问指定位置的元素。
+size(): 返回向量中的元素数。
+empty(): 如果向量为空，则返回true。
+clear(): 删除向量中的所有元素。
+reserve(): 更改向量的容量，以便可以存储更多的元素。
+注意：此示例不是完整的vector实现。它可能需要进一步优化，并且缺少许多其他vector特性，例如迭代器、插入、删除等操作。
+
+## 参考代码三
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+template<typename T>
+class Vector {
+public:
+    Vector():_size(0), _capacity(1) {
+        _data = new T[_capacity];
+    }
+
+    ~Vector() {
+        delete[] _data;
+    }
+
+    void push_back(const T& val) {
+        if (_size == _capacity) {
+            reserve(_capacity * 2);
+        }
+        _data[_size++] = val;
+    }
+
+    void pop_back() {
+        --_size;
+    }
+
+    bool empty() const {
+        return _size == 0;
+    }
+
+    size_t size() const {
+        return _size;
+    }
+
+    size_t capacity() const {
+        return _capacity;
+    }
+
+    T& at(size_t i) {
+        if (i < 0 || i >= _size) {
+            throw out_of_range("out of range");
+        }
+        return _data[i];
+    }
+
+    T& operator[](size_t i) {
+        return _data[i];
+    }
+
+private:
+    T* _data;
+    size_t _size;
+    size_t _capacity;
+
+    void reserve(size_t n) {
+        T* new_data = new T[n];
+        for (size_t i = 0; i < _size; ++i) {
+            new_data[i] = _data[i];
+        }
+        delete[] _data;
+        _data = new_data;
+        _capacity = n;
+    }
+};
+
+int main() {
+    Vector<int> vec;
+    vec.push_back(10);
+    vec.push_back(20);
+    vec.push_back(30);
+
+    cout << "遍历结果 :" << endl; 
+    for (size_t i = 0; i < vec.size(); ++i) {
+        cout << vec[i] << " ";
+    }
+    cout << endl;
+    cout << "弹出vec末尾元素" << endl;
+    vec.pop_back();
+
+    cout << "vec访问下标1的元素 :" << endl; 
+    cout << vec.at(1) << endl;
+
+    return 0;
+}
+
+//输出:
+遍历结果 :
+10 20 30
+弹出vec末尾元素
+vec访问下标1的元素 :
+20
+```
+该程序实现了一个简单的vector，其中包括push_back、pop_back、at、operator[]等常用操作。在数据存储方面，使用了动态数组来实现可变大小，并通过reserve函数来扩充容量。
