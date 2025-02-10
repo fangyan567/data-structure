@@ -1,0 +1,105 @@
+#include <iostream>
+#include <vector>
+#include <stdexcept>
+
+class MaxHeap {
+private:
+    std::vector<int> heap;
+
+    // 获取父节点索引
+    int parent(int i) {
+        return (i - 1) / 2;
+    }
+
+    // 获取左子节点索引
+    int leftChild(int i) {
+        return 2 * i + 1;
+    }
+
+    // 获取右子节点索引
+    int rightChild(int i) {
+        return 2 * i + 2;
+    }
+
+    // 上浮操作
+    void heapifyUp(int i) {
+        while (i > 0 && heap[parent(i)] < heap[i]) {
+            std::swap(heap[parent(i)], heap[i]);
+            i = parent(i);
+        }
+    }
+
+    // 下沉操作
+    void heapifyDown(int i) {
+        int maxIndex = i;
+        int left = leftChild(i);
+        int right = rightChild(i);
+
+        if (left < heap.size() && heap[left] > heap[maxIndex]) {
+            maxIndex = left;
+        }
+
+        if (right < heap.size() && heap[right] > heap[maxIndex]) {
+            maxIndex = right;
+        }
+
+        if (i != maxIndex) {
+            std::swap(heap[i], heap[maxIndex]);
+            heapifyDown(maxIndex);
+        }
+    }
+
+public:
+    // 插入元素
+    void insert(int value) {
+        heap.push_back(value);
+        heapifyUp(heap.size() - 1);
+    }
+
+    // 获取最大元素
+    int getMax() {
+        if (heap.empty()) {
+            throw std::out_of_range("Heap is empty");
+        }
+        return heap[0];
+    }
+
+    // 删除最大元素
+    void extractMax() {
+        if (heap.empty()) {
+            throw std::out_of_range("Heap is empty");
+        }
+        heap[0] = heap.back();
+        heap.pop_back();
+        heapifyDown(0);
+    }
+
+    // 打印堆
+    void print() {
+        for (int i : heap) {
+            std::cout << i << " ";
+        }
+        std::cout << std::endl;
+    }
+};
+
+int main() {
+    MaxHeap maxHeap;
+
+    maxHeap.insert(10);
+    maxHeap.insert(5);
+    maxHeap.insert(15);
+    maxHeap.insert(2);
+    maxHeap.insert(20);
+
+    std::cout << "Max heap: ";
+    maxHeap.print();
+
+    std::cout << "Max element: " << maxHeap.getMax() << std::endl;
+
+    maxHeap.extractMax();
+    std::cout << "Max heap after extractMax: ";
+    maxHeap.print();
+
+    return 0;
+}
