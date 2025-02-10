@@ -1,0 +1,139 @@
+# 哈希表
+下面是一个简单的C++实现手写哈希表的完整代码。这个哈希表使用链地址法（Chaining）来处理哈希冲突。
+
+
+## 参考代码
+
+```cpp
+#include <iostream>
+#include <list>
+#include <vector>
+
+template <typename K, typename V>
+class HashTable {
+private:
+    static const int TABLE_SIZE = 10; // 哈希表的大小
+
+    // 哈希表的每个桶是一个链表
+    std::vector<std::list<std::pair<K, V>>> table;
+
+    // 哈希函数
+    int hashFunction(K key) {
+        return key % TABLE_SIZE;
+    }
+
+public:
+    HashTable() : table(TABLE_SIZE) {}
+
+    // 插入键值对
+    void insert(K key, V value) {
+        int index = hashFunction(key);
+        for (auto& pair : table[index]) {
+            if (pair.first == key) {
+                pair.second = value; // 如果键已存在，更新值
+                return;
+            }
+        }
+        table[index].emplace_back(key, value); // 否则插入新的键值对
+    }
+
+    // 查找键对应的值
+    bool find(K key, V& value) {
+        int index = hashFunction(key);
+        for (const auto& pair : table[index]) {
+            if (pair.first == key) {
+                value = pair.second;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 删除键值对
+    void remove(K key) {
+        int index = hashFunction(key);
+        auto& bucket = table[index];
+        for (auto it = bucket.begin(); it != bucket.end(); ++it) {
+            if (it->first == key) {
+                bucket.erase(it);
+                return;
+            }
+        }
+    }
+
+    // 打印哈希表
+    void print() {
+        for (int i = 0; i < TABLE_SIZE; ++i) {
+            std::cout << "Bucket " << i << ": ";
+            for (const auto& pair : table[i]) {
+                std::cout << "(" << pair.first << ", " << pair.second << ") ";
+            }
+            std::cout << std::endl;
+        }
+    }
+};
+
+int main() {
+    HashTable<int, std::string> hashTable;
+
+    hashTable.insert(1, "Alice");
+    hashTable.insert(2, "Bob");
+    hashTable.insert(11, "Charlie"); // 11 % 10 = 1，与键1冲突
+    hashTable.insert(12, "David");   // 12 % 10 = 2，与键2冲突
+
+    hashTable.print();
+
+    std::string value;
+    if (hashTable.find(11, value)) {
+        std::cout << "Found: " << value << std::endl;
+    } else {
+        std::cout << "Not found" << std::endl;
+    }
+
+    hashTable.remove(2);
+    hashTable.print();
+
+    return 0;
+}
+```
+
+## 代码说明：
+哈希表结构：哈希表使用std::vector<std::list<std::pair<K, V>>>来存储数据。每个桶是一个链表，链表中存储键值对。
+
+哈希函数：使用简单的取模运算作为哈希函数。
+
+插入操作：insert函数首先计算键的哈希值，然后在对应的链表中查找是否已经存在该键。如果存在，则更新值；否则，插入新的键值对。
+
+查找操作：find函数根据键的哈希值在对应的链表中查找键值对。如果找到，返回true并将值存储在value中；否则返回false。
+
+删除操作：remove函数根据键的哈希值在对应的链表中查找并删除键值对。
+
+打印操作：print函数遍历哈希表并打印每个桶中的键值对。
+
+
+
+## 输出结果
+
+```cpp
+Bucket 0: 
+Bucket 1: (1, Alice) (11, Charlie) 
+Bucket 2: (2, Bob) (12, David) 
+Bucket 3: 
+Bucket 4: 
+Bucket 5: 
+Bucket 6: 
+Bucket 7: 
+Bucket 8: 
+Bucket 9: 
+Found: Charlie
+Bucket 0: 
+Bucket 1: (1, Alice) (11, Charlie) 
+Bucket 2: (12, David) 
+Bucket 3: 
+Bucket 4: 
+Bucket 5: 
+Bucket 6: 
+Bucket 7: 
+Bucket 8: 
+Bucket 9: 
+```
