@@ -1,0 +1,211 @@
+#include <iostream>
+#include <algorithm>
+
+class AVLTree {
+private:
+    // 定义树节点结构
+    struct Node {
+        int value;
+        int height;
+        Node* left;
+        Node* right;
+
+        Node(int val) : value(val), height(1), left(nullptr), right(nullptr) {}
+    };
+
+    Node* root;
+
+    // 获取节点高度
+    int height(Node* node) {
+        return node ? node->height : 0;
+    }
+
+    // 更新节点高度
+    void updateHeight(Node* node) {
+        node->height = std::max(height(node->left), height(node->right)) + 1;
+    }
+
+    // 计算平衡因子
+    int balanceFactor(Node* node) {
+        return height(node->left) - height(node->right);
+    }
+
+    // 右旋
+    Node* rightRotate(Node* y) {
+        Node* x = y->left;
+        Node* T2 = x->right;
+
+        x->right = y;
+        y->left = T2;
+
+        updateHeight(y);
+        updateHeight(x);
+
+        return x;
+    }
+
+    // 左旋
+    Node* leftRotate(Node* x) {
+        Node* y = x->right;
+        Node* T2 = y->left;
+
+        y->left = x;
+        x->right = T2;
+
+        updateHeight(x);
+        updateHeight(y);
+
+        return y;
+    }
+
+    // 平衡节点
+    Node* balance(Node* node) {
+        updateHeight(node);
+
+        int bf = balanceFactor(node);
+
+        // 左子树不平衡
+        if (bf > 1) {
+            if (balanceFactor(node->left) < 0) {
+                node->left = leftRotate(node->left);
+            }
+            return rightRotate(node);
+        }
+
+        // 右子树不平衡
+        if (bf < -1) {
+            if (balanceFactor(node->right) > 0) {
+                node->right = rightRotate(node->right);
+            }
+            return leftRotate(node);
+        }
+
+        return node;
+    }
+
+    // 插入节点（递归实现）
+    Node* insert(Node* node, int value) {
+        if (node == nullptr) {
+            return new Node(value);
+        }
+
+        if (value < node->value) {
+            node->left = insert(node->left, value);
+        } else if (value > node->value) {
+            node->right = insert(node->right, value);
+        } else {
+            return node; // 不允许重复值
+        }
+
+        return balance(node);
+    }
+
+    // 查找最小节点
+    Node* findMin(Node* node) const {
+        while (node->left != nullptr) {
+            node = node->left;
+        }
+        return node;
+    }
+
+    // 删除节点（递归实现）
+    Node* remove(Node* node, int value) {
+        if (node == nullptr) {
+            return nullptr;
+        }
+
+        if (value < node->value) {
+            node->left = remove(node->left, value);
+        } else if (value > node->value) {
+            node->right = remove(node->right, value);
+        } else {
+            // 找到要删除的节点
+            if (node->left == nullptr || node->right == nullptr) {
+                Node* temp = node->left ? node->left : node->right;
+                if (temp == nullptr) {
+                    temp = node;
+                    node = nullptr;
+                } else {
+                    *node = *temp;
+                }
+                delete temp;
+            } else {
+                // 节点有两个子节点，找到右子树的最小节点
+                Node* temp = findMin(node->right);
+                node->value = temp->value;
+                node->right = remove(node->right, temp->value);
+            }
+        }
+
+        if (node == nullptr) {
+            return nullptr;
+        }
+
+        return balance(node);
+    }
+
+    // 中序遍历（递归实现）
+    void inorder(Node* node) const {
+        if (node == nullptr) {
+            return;
+        }
+        inorder(node->left);
+        std::cout << node->value << " ";
+        inorder(node->right);
+    }
+
+    // 释放树的内存（递归实现）
+    void clear(Node* node) {
+        if (node == nullptr) {
+            return;
+        }
+        clear(node->left);
+        clear(node->right);
+        delete node;
+    }
+
+public:
+    // 构造函数
+    AVLTree() : root(nullptr) {}
+
+    // 析构函数
+    ~AVLTree() {
+        clear(root);
+    }
+
+    // 插入值
+    void insert(int value) {
+        root = insert(root, value);
+    }
+
+    // 删除值
+    void remove(int value) {
+        root = remove(root, value);
+    }
+
+    // 中序遍历打印
+    void printInorder() const {
+        inorder(root);
+        std::cout << std::endl;
+    }
+};
+
+int main() {
+    AVLTree avlTree;
+
+    avlTree.insert(10);
+    avlTree.insert(20);
+    avlTree.insert(30);
+    avlTree.insert(40);
+    avlTree.insert(50);
+    avlTree.insert(25);
+
+    std::cout << "Inorder traversal: ";
+    avlTree.printInorder();
+
+    avlTree.remove(30);
+    std::cout << "Inorder traversal after removing 30: ";
+    avlTree.printInorder();
+
+    return 0;
+}
